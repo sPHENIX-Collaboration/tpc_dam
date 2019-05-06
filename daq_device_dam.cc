@@ -121,8 +121,8 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
 
   // update id's etc
   sevt->sub_id =  m_subeventid;
-  sevt->sub_type=2;
-  sevt->sub_decoding = 5;
+  sevt->sub_type=4;    //++++
+  sevt->sub_decoding = 99;  /++++++
   sevt->reserved[0] = 0;
   sevt->reserved[1] = 0;
 
@@ -130,7 +130,9 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
   uint16_t reg5;
 
   uint16_t *dest = (uint16_t *) &sevt->data;
+  //++++++ here starts the magic code
 
+  
   int wordcount = 0;
   
   int max = max_length(etype) - SEVTHEADERLENGTH - 4; // safety belt for the length
