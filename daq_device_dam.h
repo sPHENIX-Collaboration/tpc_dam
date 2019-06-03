@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <damTriggerHandler.h>
 
+class Fee;
 
 class daq_device_dam: public  daq_device {
 
@@ -15,9 +16,10 @@ public:
   daq_device_dam(const int eventtype
 		 , const int subeventid
 		 , const int trigger = 1
-		 , const int self_trigger = 0);
+		 , const int nunits=1
+		 , const int npackets=1);
 
-    ~daq_device_dam();
+  ~daq_device_dam();
 
 
   void identify(std::ostream& os = std::cout) const;
@@ -37,16 +39,18 @@ public:
   
  protected:
 
-
+  int _dam_fd;
+  
   int _broken;
 
   int _trigger;
-  int _self_trigger;
+
+  int _length;
+  int _nunits;
+  int _npackets;
   
-  int  _dam_fd;
-
-
   damTriggerHandler *_th;
+
 
 };
 

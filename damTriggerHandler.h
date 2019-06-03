@@ -8,12 +8,16 @@ class damTriggerHandler : public TriggerHandler {
 
 public:
 
-  damTriggerHandler(const int etype) {_etype = etype;};
+  damTriggerHandler(const int etype)
+    {
+      _etype = etype;
+      _poll_count = 0;
+    };
 
   ~damTriggerHandler() {};
 
   int set_damfd ( const int dam_fd);
-  int set_selftrigger(const int sleepinterval) { _self_trigger = sleepinterval;};
+  //  int set_selftrigger(const int sleepinterval) { _self_trigger = sleepinterval;};
 
 
   // this is the virtual worker routine
@@ -23,7 +27,7 @@ public:
   
   int _dam_fd;
   int _etype;
-  int _self_trigger;
+  int _poll_count;
 };
 
 #endif

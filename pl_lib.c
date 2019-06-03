@@ -8,6 +8,41 @@
 
 #include "pl_lib.h"
 
+int dam_enable_irq(int fd)
+{
+    if (ioctl(fd, ENABLE_IRQ) == -1) {
+        perror(__func__);
+        return -1;
+    }
+    return 0;
+}
+
+int dam_disable_irq(int fd)
+{
+    if (ioctl(fd, DISABLE_IRQ) == -1) {
+        perror(__func__);
+        return -1;
+    }
+    return 0;
+}
+
+int dam_reset_dma_engine(int fd)
+{
+    if (ioctl(fd, RESET_DMA) == -1) {
+        perror(__func__);
+        return -1;
+    }
+    return 0;
+}
+
+int dam_wait_for_dma(int fd, int *data)
+{
+    if (ioctl(fd, WAIT_FOR_DMA, data) == -1) {
+        perror(__func__);
+        return -1;
+    }
+    return 0;
+}
 
 int pl_open(int *fd) {
     if ( (*fd = open(DEVNAME, O_RDWR)) <= 0 ) {
@@ -47,25 +82,29 @@ int pl_register_write(int fd, uint32_t addr, uint32_t data) {
     return 0;
 }
 
-uint16_t fee_register_read(int fd, uint32_t addr) {
-    pldrv_io_t p;
-    p.address = addr;// / sizeof(uint32_t);
-    p.data = 0xbeef;
+uint16_t fee_register_read(int fd, uint32_t id, uint32_t addr) {
+    feereg_io_t feereg;
+
+    feereg.id      = id;
+    feereg.address = addr;
+    feereg.data    = -1;
     
-    if (ioctl(fd, FEE_READ_REG, &p) == -1) {
+    if (ioctl(fd, FEE_READ_REG, &feereg) == -1) {
         perror(__func__);
         return -1;
     }
     
-    return p.data;
+    return feereg.data;
 }
 
-int fee_register_write(int fd, uint32_t addr, uint32_t data) {
-    pldrv_io_t p;
-    p.address = addr;// / sizeof(uint32_t);
-    p.data = data;
+int fee_register_write(int fd, uint32_t id, uint32_t addr, uint32_t data) {
+    feereg_io_t feereg;
+
+    feereg.id      = id;
+    feereg.address = addr;
+    feereg.data    = data;
     
-    if (ioctl(fd, FEE_WRITE_REG, &p) == -1) {
+    if (ioctl(fd, FEE_WRITE_REG, &feereg) == -1) {
         perror(__func__);
         return -1;
     }
@@ -138,11 +177,12 @@ int pl_set_debug_level(int fd, uint32_t level) {
 }
 
 int pl_get_data(int fd, uint32_t *buff, size_t len) {
-    buff = mmap(NULL, len, PROT_READ, MAP_SHARED, fd, 0);
+    /*buff = mmap(NULL, len, PROT_READ, MAP_SHARED, fd, 0);
     if (buff == MAP_FAILED) {
         perror(__func__);
         return -1;
     }
+    */
     
     return 0;
 }
