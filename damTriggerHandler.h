@@ -19,6 +19,7 @@ public:
   int set_damfd ( const int dam_fd);
   //  int set_selftrigger(const int sleepinterval) { _self_trigger = sleepinterval;};
 
+  int enable();
 
   // this is the virtual worker routine
   int wait_for_trigger( const int moreinfo=0);

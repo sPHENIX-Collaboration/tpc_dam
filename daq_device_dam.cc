@@ -112,24 +112,25 @@ int  daq_device_dam::init()
       _th->set_damfd( _dam_fd);
     }
 
-  // Disable DMA engine
-  pl_register_write(_dam_fd, DAM_DMA_CTRL, 0x0);
+  // // Disable DMA engine
+  // pl_register_write(_dam_fd, DAM_DMA_CTRL, 0x0);
   
-  // Reset FEE FIFOs
-  pl_register_write(_dam_fd, 0x24, 0xf);
+  // // Reset FEE FIFOs
+  // pl_register_write(_dam_fd, 0x24, 0xf);
   
-  dam_reset_dma_engine(_dam_fd);
+  // dam_reset_dma_engine(_dam_fd);
   
-  // Set burst length
-  pl_register_write(_dam_fd, DAM_DMA_BURST_LENGTH, DATA_LENGTH);
-  size_t len = pl_register_read(_dam_fd, DAM_DMA_BURST_LENGTH);
+  // // Set burst length
+  // pl_register_write(_dam_fd, DAM_DMA_BURST_LENGTH, DATA_LENGTH);
+  // size_t len = pl_register_read(_dam_fd, DAM_DMA_BURST_LENGTH);
   
-  // Enable DMA engine
-  pl_register_write(_dam_fd, DAM_DMA_CTRL, 1 << 3 | 1 << 1);
+  // // Enable DMA engine
+  // pl_register_write(_dam_fd, DAM_DMA_CTRL, 1 << 3 | 1 << 1);
 
 
-  // Take FEE FIFOs out of reset
-  pl_register_write(_dam_fd, 0x24, 0x0);
+  // // Take FEE FIFOs out of reset
+  // pl_register_write(_dam_fd, 0x24, 0x0);
+
   return 0;
 
 }

@@ -3,13 +3,47 @@
 
 
 #include <iostream>
+#include <iomanip>
 #include <sys/types.h>
 #include <stdint.h>
 
 #include <unistd.h>
 #include <fcntl.h>
 
+#define DATA_LENGTH          137*256 // 137 words * 256 channels
+#define FEE_SAMPA_CTRL       0x5
+#define DAM_DMA_FIFO         0x5
+#define DAM_DMA_CTRL         0x4004
+#define DAM_DMA_BURST_LENGTH 0x4002
+#define DAM_DMA_WRITE_PTR    0x4003
+
+#include "pl_lib.h"
+
 using namespace std;
+
+int damTriggerHandler::enable()
+{
+  cout << __FILE__ << " " << __LINE__ << " enabling DAQ trigger" << endl;
+    
+  // Disable DMA engine
+  pl_register_write(_dam_fd, DAM_DMA_CTRL, 0x0);
+  
+  // Reset FEE FIFOs
+  pl_register_write(_dam_fd, 0x24, 0xf);
+  
+  dam_reset_dma_engine(_dam_fd);
+  
+  // Set burst length
+  pl_register_write(_dam_fd, DAM_DMA_BURST_LENGTH, DATA_LENGTH);
+  size_t len = pl_register_read(_dam_fd, DAM_DMA_BURST_LENGTH);
+  
+  // Enable DMA engine
+  pl_register_write(_dam_fd, DAM_DMA_CTRL, 1 << 3 | 1 << 1);
+
+
+  // Take FEE FIFOs out of reset
+  pl_register_write(_dam_fd, 0x24, 0x0);
+}
 
 
 int damTriggerHandler::wait_for_trigger( const int moreinfo)
