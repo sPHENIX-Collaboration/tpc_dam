@@ -23,26 +23,7 @@ using namespace std;
 
 int damTriggerHandler::enable()
 {
-  cout << __FILE__ << " " << __LINE__ << " enabling DAQ trigger" << endl;
-    
-  // Disable DMA engine
-  pl_register_write(_dam_fd, DAM_DMA_CTRL, 0x0);
-  
-  // Reset FEE FIFOs
-  pl_register_write(_dam_fd, 0x24, 0xf);
-  
-  dam_reset_dma_engine(_dam_fd);
-  
-  // Set burst length
-  pl_register_write(_dam_fd, DAM_DMA_BURST_LENGTH, DATA_LENGTH);
-  size_t len = pl_register_read(_dam_fd, DAM_DMA_BURST_LENGTH);
-  
-  // Enable DMA engine
-  pl_register_write(_dam_fd, DAM_DMA_CTRL, 1 << 3 | 1 << 1);
-
-
-  // Take FEE FIFOs out of reset
-  pl_register_write(_dam_fd, 0x24, 0x0);
+  return 0;
 }
 
 
@@ -68,7 +49,7 @@ int damTriggerHandler::wait_for_trigger( const int moreinfo)
   
   if (FD_ISSET(_dam_fd, &read_flags))
     {
-      //      cout << __LINE__ << "  " << __FILE__ << " trigger after " << _poll_count << " polls" << endl;
+      cout << __LINE__ << "  " << __FILE__ << " trigger after " << _poll_count << " polls" << endl;
       _poll_count = 0;
       return _etype;
     }

@@ -40,8 +40,8 @@ daq_device_dam::daq_device_dam(const int eventtype
   _npackets = npackets;  // how many packet we make
   _broken = 0;
 
-  if ( _nunits < 0) _nunits = 1;
-  if ( _npackets < 0) _npackets = 1;
+  if ( _nunits <= 0) _nunits = 1;
+  if ( _npackets <= 0) _npackets = 1;
 
   if ( _npackets * _nunits * DATA_LENGTH + _npackets *SEVTHEADERLENGTH  > 1.5 * 1024 * 1024 * 1024)
     {
@@ -171,7 +171,7 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
       // update id's etc
       sevt->sub_id = ipacket;
       sevt->sub_type=2;
-      sevt->sub_decoding = 99; 
+      sevt->sub_decoding = 100; // IDTPCFEEV3 
       sevt->reserved[0] = 0;
       sevt->reserved[1] = 0;
 
@@ -182,7 +182,7 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
   
       ret = read(_dam_fd, dest, _length);
 
-      //cout << __LINE__ << "  " << __FILE__ << " read  "  << ret << " words " << endl;
+      cout << __LINE__ << "  " << __FILE__ << " read  "  << ret << " words " << endl;
       
       //      sevt->sub_padding = ret%2 ;
       sevt->sub_padding = 0;  // we can never have an odd number of uint16s

@@ -7,7 +7,7 @@ extern "C" {
 
 #include "dam_ioctl.h"
 
-#define DEVNAME "/dev/dam"
+#define DEVNAME "/dev/dam0"
 #define PAGE_SIZE 4096
 
 int pl_open(int *fd);
