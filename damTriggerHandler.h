@@ -11,7 +11,7 @@ public:
   damTriggerHandler(const int etype)
     {
       _etype = etype;
-      _poll_count = 0;
+      //_poll_count = 0;
     };
 
   ~damTriggerHandler() {};
@@ -28,7 +28,7 @@ public:
   
   int _dam_fd;
   int _etype;
-  int _poll_count;
+  //int _poll_count;
 };
 
 #endif

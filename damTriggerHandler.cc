@@ -45,12 +45,12 @@ int damTriggerHandler::wait_for_trigger( const int moreinfo)
       perror("select()");
     }
 
-  _poll_count++;
+  //_poll_count++;
   
   if (FD_ISSET(_dam_fd, &read_flags))
     {
-      cout << __LINE__ << "  " << __FILE__ << " trigger after " << _poll_count << " polls" << endl;
-      _poll_count = 0;
+      //cout << __LINE__ << "  " << __FILE__ << " trigger after " << _poll_count << " polls" << endl;
+      //_poll_count = 0;
       return _etype;
     }
   
