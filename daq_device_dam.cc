@@ -182,7 +182,7 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
   
       ret = read(_dam_fd, dest, _length);
 
-      cout << __LINE__ << "  " << __FILE__ << " read  "  << ret << " words " << endl;
+      //cout << __LINE__ << "  " << __FILE__ << " read  "  << ret << " words " << endl;
       
       //      sevt->sub_padding = ret%2 ;
       sevt->sub_padding = 0;  // we can never have an odd number of uint16s
