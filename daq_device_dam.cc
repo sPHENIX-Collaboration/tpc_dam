@@ -171,7 +171,7 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
       // update id's etc
       sevt->sub_id = ipacket;
       sevt->sub_type=2;
-      sevt->sub_decoding = 100; // IDTPCFEEV3 
+      sevt->sub_decoding = 120; // IDTPCFEEV3 
       sevt->reserved[0] = 0;
       sevt->reserved[1] = 0;
 
