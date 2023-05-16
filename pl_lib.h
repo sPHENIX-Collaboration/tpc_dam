@@ -7,10 +7,9 @@ extern "C" {
 
 #include "dam_ioctl.h"
 
-#define DEVNAME "/dev/dam0"
 #define PAGE_SIZE 4096
 
-int pl_open(int *fd);
+int pl_open(int *fd, const char * dev_name);
 int pl_close(int fd);
 uint32_t pl_register_read(int fd, uint32_t addr);
 int pl_register_write(int fd, uint32_t addr, uint32_t data);

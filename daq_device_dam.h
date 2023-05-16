@@ -5,6 +5,7 @@
 #include <daq_device.h>
 #include <stdio.h>
 #include <damTriggerHandler.h>
+#include <string>
 
 class Fee;
 
@@ -17,7 +18,9 @@ public:
 		 , const int subeventid
 		 , const int trigger = 1
 		 , const int nunits=1
-		 , const int npackets=1);
+		 , const int npackets=1
+     , const std::string & damDevName = "/dev/dam0"
+     );
 
   ~daq_device_dam();
 
@@ -35,7 +38,6 @@ public:
   int rearm( const int etype);
   
   int endrun();
-
   
  protected:
 
@@ -51,7 +53,7 @@ public:
   
   damTriggerHandler *_th;
 
-
+  std::string m_deviceName;
 };
 
 

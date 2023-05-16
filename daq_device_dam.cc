@@ -29,6 +29,7 @@ daq_device_dam::daq_device_dam(const int eventtype
 			       , const int trigger
 			       , const int nunits
 			       , const int npackets
+             , const std::string & damDevName
 			       )
 {
 
@@ -39,6 +40,7 @@ daq_device_dam::daq_device_dam(const int eventtype
   _nunits = nunits;     // how much we cram into one packet
   _npackets = npackets;  // how many packet we make
   _broken = 0;
+  m_deviceName = damDevName;
 
   if ( _nunits <= 0) _nunits = 1;
   if ( _npackets <= 0) _npackets = 1;
@@ -89,7 +91,7 @@ int  daq_device_dam::init()
     }
 
   _broken = 0;
-  pl_open(&_dam_fd);
+  pl_open(&_dam_fd, m_deviceName.c_str());
 
   if ( _dam_fd < 0)
     {
@@ -199,7 +201,7 @@ void daq_device_dam::identify(std::ostream& os) const
 {
   if ( _broken) 
     {
-      os << "FELIX DAM Card  Event Type: " << m_eventType 
+      os << "FELIX DAM Card "<<m_deviceName<<" Event Type: " << m_eventType 
 	 << " Subevent id: " << m_subeventid 
 	 << " payload units " << _nunits 
 	 << " packets " << _npackets 
@@ -207,7 +209,7 @@ void daq_device_dam::identify(std::ostream& os) const
     }
   else
     {
-      os << "FELIX DAM Card  Event Type: " << m_eventType 
+      os << "FELIX DAM Card "<<m_deviceName<<" Event Type: " << m_eventType 
 	 << " Subevent id: " << m_subeventid 
 	 << " payload units " << _nunits 
 	 << " packets " << _npackets;
