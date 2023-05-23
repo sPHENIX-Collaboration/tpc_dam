@@ -44,8 +44,8 @@ int dam_wait_for_dma(int fd, int *data)
     return 0;
 }
 
-int pl_open(int *fd) {
-    if ( (*fd = open(DEVNAME, O_RDWR)) <= 0 ) {
+int pl_open(int *fd, const char * dev_name) {
+    if ( (*fd = open(dev_name, O_RDWR)) <= 0 ) {
         perror(__func__);
         return -1;
     }

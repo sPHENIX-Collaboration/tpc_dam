@@ -65,6 +65,21 @@ int dam_plugin::create_device(deviceblock *db)
 						  npackets));
 	  return 0;  // say "we handled this request" 
 	}
+      else if ( db->npar == 7)
+	{
+	  int trigger = get_value ( db->argv3);
+	  int nunits = get_value ( db->argv4);
+	  int npackets = get_value ( db->argv5);
+	  std::string devName = ( db->argv6);
+
+	  add_readoutdevice ( new daq_device_dam( eventtype,
+						  subid,
+						  trigger,
+						  nunits,
+						  npackets,
+						  devName));
+	  return 0;  // say "we handled this request" 
+	}
 
       else
 	{
