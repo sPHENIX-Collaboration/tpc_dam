@@ -11,7 +11,9 @@
 #include "pl_lib.h"
 //#include "fee_reg.h"
 
-#define DATA_LENGTH          137*256 // 137 words * 256 channels
+// DAM transmit 256 bit word. 
+// This byte-unit length is just and large chunk of multiple of 256 bits
+#define DATA_LENGTH          256*256 
 #define FEE_SAMPA_CTRL       0x5
 #define DAM_DMA_FIFO         0x5
 #define DAM_DMA_CTRL         0x4004
@@ -177,20 +179,19 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
       sevt->reserved[0] = 0;
       sevt->reserved[1] = 0;
 
+      // DAM IO uses unistd read(), which operates on the byte length units
+      uint8_t *dest = (uint8_t *) &sevt->data;
 
-      uint16_t *dest = (uint16_t *) &sevt->data;
+      ssize_t  c = read(_dam_fd, dest, _length);
+      // cout << __LINE__ << "  " << __FILE__ << " read  "  << c << " bytes " << endl;
 
-      int ret;
-  
-      ret = read(_dam_fd, dest, _length);
+      // padding to 8 bytes
+      sevt->sub_padding = c%8;
+      if ( sevt->sub_padding) sevt->sub_padding = 8 - sevt->sub_padding;
 
-      //cout << __LINE__ << "  " << __FILE__ << " read  "  << ret << " words " << endl;
-      
-      //      sevt->sub_padding = ret%2 ;
-      sevt->sub_padding = 0;  // we can never have an odd number of uint16s
-  
-      sevt->sub_length += (ret + sevt->sub_padding);
-      // cout << __LINE__ << "  " << __FILE__ << " returning "  << sevt->sub_length << endl;
+      sevt->sub_length += (c + sevt->sub_padding) /4;
+      // cout << __LINE__ << "  " << __FILE__ << " sevt->sub_padding =  "  << sevt->sub_padding << " return add  " << (c + sevt->sub_padding) /4 << endl;
+
       overall_length += sevt->sub_length;
     }
   return overall_length;
