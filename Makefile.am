@@ -8,24 +8,12 @@ INCLUDES = -I$(includedir)
 
 include_HEADERS = 
 
-lib_LTLIBRARIES =  libdam_util.la librcdaqplugin_dam.la
-
-
-libdam_util_la_SOURCES = \
-	pl_lib.c
+lib_LTLIBRARIES =  librcdaqplugin_dam.la
 
 librcdaqplugin_dam_la_SOURCES = \
 	daq_device_dam.cc \
 	damTriggerHandler.cc \
 	dam_plugin.cc
-
-
-librcdaqplugin_dam_la_LIBADD = libdam_util.la
-
-
-#bin_PROGRAMS = triggerSampa
-#triggerSampa_SOURCES = triggerSampa.cc
-#triggerSampa_LDADD = libdam_util.la
 
 
 clean-local:
