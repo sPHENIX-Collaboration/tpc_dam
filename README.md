@@ -20,7 +20,7 @@ rcdaq_client create_device device_dam <event type> <packetid0> <packetid2> <unit
 for example
 
 rcdaq_client create_device device_dam 1 4001 4002 1 1
-- evt type 2 = data event,
+- evt type 1 = data event,
 - packet ids 4001 (/dev/dam0) and 4002 (/dev/dam1),
 - reading one "unit of data",
 - and we are the trigger device
