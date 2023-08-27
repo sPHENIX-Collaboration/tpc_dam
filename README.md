@@ -43,19 +43,26 @@ list is in place mainly for future use. It is recommended that you
 only give the parameters that are actually not the default.
 
 So instead of 
+
 rcdaq_client create_device device_dam 1 4001 4002 1 1
+
 as shown above, you should use
+
 rcdaq_client create_device device_dam 1 4001 4002
 
 Here are some use cases:
 
 rcdaq_client create_device device_dam 1 4001 4002 64
+
 (make 4MB packets)
 
 rcdaq_client create_device device_dam 1 4001 0 64
+
 (do not read the 2nd endpoint - expert level)
 
 rcdaq_client create_device device_dam 1 0 4002 64
+
 (do not read the first endpoint - expert level)
 
 Note that setting both packet ids to 0 results in an error.
+
