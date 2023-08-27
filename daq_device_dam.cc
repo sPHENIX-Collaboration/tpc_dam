@@ -8,15 +8,14 @@
 #include <stdint.h>
 #include <fcntl.h>
 
-#include "pl_lib.h"
-//#include "fee_reg.h"
+#define DEVNAME0 "/dev/dam0"
+#define DEVNAME1 "/dev/dam1"
 
-#define DATA_LENGTH          137*256 // 137 words * 256 channels
-#define FEE_SAMPA_CTRL       0x5
-#define DAM_DMA_FIFO         0x5
-#define DAM_DMA_CTRL         0x4004
-#define DAM_DMA_BURST_LENGTH 0x4002
-#define DAM_DMA_WRITE_PTR    0x4003
+// this is nice for testing - we can read off named pipes where we control what gets there  
+//#define DEVNAME0 "/home/purschke/damtest/f_dam0"
+//#define DEVNAME1 "/home/purschke/damtest/f_dam1"
+
+#define DATA_LENGTH          256*256 // 256KB
 
 
 using namespace std;
@@ -25,27 +24,40 @@ int readn (int fd, char *ptr, const int nbytes);
 
 
 daq_device_dam::daq_device_dam(const int eventtype
-			       , const int subeventid
-			       , const int trigger
+			       , const int subeventid0
+			       , const int subeventid1
 			       , const int nunits
-			       , const int npackets
-			       )
+			       , const int trigger)
 {
 
   m_eventType  = eventtype;
-  m_subeventid = subeventid;
-
+  m_subeventid = 0;
+  _subeventid0 = subeventid0;
+  _subeventid1 = subeventid1;
+  _nunits = nunits;
+  if ( _nunits <= 0 ) _nunits = 1;  // make sure we read at least one unit
+  
   _trigger = trigger;
-  _nunits = nunits;     // how much we cram into one packet
-  _npackets = npackets;  // how many packet we make
+    
+  _dam_fd0 = -1;  // want them to be a non-valid file descriptor initially
+  _dam_fd1 = -1;
+
   _broken = 0;
 
-  if ( _nunits <= 0) _nunits = 1;
-  if ( _npackets <= 0) _npackets = 1;
+  _npackets = 0;   // we need this to calculate the max data size we can get
+  if ( subeventid0 ) _npackets++;
+  if ( subeventid1 ) _npackets++;
 
-  if ( _npackets * _nunits * DATA_LENGTH + _npackets *SEVTHEADERLENGTH  > 1.5 * 1024 * 1024 * 1024)
+  if ( ! _npackets)  // if we don't read anything, what's the point...
     {
       _broken = -3;
+    }
+  
+  _desired_data_length =  _nunits * DATA_LENGTH; // this is per packet
+  
+  if ( _desired_data_length > 1.5 * 1024 * 1024 * 1024)
+    {
+      _broken = -4;
     }
 
   
@@ -62,7 +74,6 @@ daq_device_dam::daq_device_dam(const int eventtype
       _th = 0;
     }
 
-  _length =  _nunits * DATA_LENGTH;   // we try this. just one event
   
 }
 
@@ -75,68 +86,53 @@ daq_device_dam::~daq_device_dam()
       delete _th;
       _th = 0;
     }
+  if ( _dam_fd0 > 0) close (_dam_fd0);
+  if ( _dam_fd1 > 0) close (_dam_fd1);
+  
 }
 
 
 int  daq_device_dam::init()
 {
-
+  
   if ( _broken ) 
     {
       //      cout << __LINE__ << "  " << __FILE__ << " broken ";
       //      identify();
       return 0; //  we had a catastrophic failure
     }
-
-  _broken = 0;
-  pl_open(&_dam_fd);
-
-  if ( _dam_fd < 0)
+  
+  if ( _subeventid0) // we have the first dam to read
     {
-      _broken = 1;
-      return -1;
+      if ( (_dam_fd0 = open(DEVNAME0, O_RDWR)) <= 0 )
+	{
+	  perror(__func__);
+	  _broken = 2;
+	  return 1;
+	}
     }
-
-  // int ret = fcntl(_dam_fd, F_SETFL, fcntl(_dam_fd, F_GETFL, 0) | O_NONBLOCK);
-  // if (ret < 0)
-  //   {
-  //     perror("fcntl");
-  //     _broken = ret;
-  //     return -1;
-  //   }
-
-
+  
+  if ( _subeventid1) // we have a second dam to read
+    {
+      if ( (_dam_fd1 = open(DEVNAME1, O_RDWR)) <= 0 )
+	{
+	  close(_dam_fd0);  // we already got fd0
+	  perror(__func__);
+	  _broken = 2;
+	  return 1;
+	}
+    }
   
   if ( _trigger )
     {
-      _th->set_damfd( _dam_fd);
+      _th->set_damfd( _dam_fd0, _dam_fd1);
     }
-
-  // // Disable DMA engine
-  // pl_register_write(_dam_fd, DAM_DMA_CTRL, 0x0);
   
-  // // Reset FEE FIFOs
-  // pl_register_write(_dam_fd, 0x24, 0xf);
-  
-  // dam_reset_dma_engine(_dam_fd);
-  
-  // // Set burst length
-  // pl_register_write(_dam_fd, DAM_DMA_BURST_LENGTH, DATA_LENGTH);
-  // size_t len = pl_register_read(_dam_fd, DAM_DMA_BURST_LENGTH);
-  
-  // // Enable DMA engine
-  // pl_register_write(_dam_fd, DAM_DMA_CTRL, 1 << 3 | 1 << 1);
-
-
-  // // Take FEE FIFOs out of reset
-  // pl_register_write(_dam_fd, 0x24, 0x0);
-
   return 0;
-
 }
-
+  
 // the put_data function
-
+  
 int daq_device_dam::put_data(const int etype, int * adr, const int length )
 {
 
@@ -147,9 +143,6 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
       return 0; //  we had a catastrophic failure
     }
 
-  //  cout << __LINE__ << "  " << __FILE__ << " starting put_data "  << endl;
-
-
 
   int len = 0;
 
@@ -158,40 +151,58 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
       return 0;
     }
 
+  int l = 0;
 
-  int ipacket;
-  int overall_length = 0;
-  
-  for ( ipacket = m_subeventid; ipacket < m_subeventid + _npackets ; ipacket++)
+  if ( _th)  // we cannot do without being a trigger device for now
     {
-      subevtdata_ptr sevt =  (subevtdata_ptr) &adr[overall_length];
-      // set the initial subevent length
-      sevt->sub_length =  SEVTHEADERLENGTH;
+      fd_set readflags = _th->get_readflags();
 
-      // update id's etc
-      sevt->sub_id = ipacket;
-      sevt->sub_type=2;
-      sevt->sub_decoding = 120; // IDTPCFEEV3 
-      sevt->reserved[0] = 0;
-      sevt->reserved[1] = 0;
-
-
-      uint16_t *dest = (uint16_t *) &sevt->data;
-
-      int ret;
+      if (_subeventid0 && FD_ISSET(_dam_fd0, &readflags))
+	{
+	  //cout << __LINE__ << "  " << __FILE__ << " data on dam0 "  << endl;
+	  l = add_packet ( _dam_fd0, adr, length, _subeventid0);
+	}
   
-      ret = read(_dam_fd, dest, _length);
-
-      //cout << __LINE__ << "  " << __FILE__ << " read  "  << ret << " words " << endl;
-      
-      //      sevt->sub_padding = ret%2 ;
-      sevt->sub_padding = 0;  // we can never have an odd number of uint16s
-  
-      sevt->sub_length += (ret + sevt->sub_padding);
-      // cout << __LINE__ << "  " << __FILE__ << " returning "  << sevt->sub_length << endl;
-      overall_length += sevt->sub_length;
+      // see if we have a 2nd endpoint, and data on it
+      adr += l;
+      if ( _subeventid1 && FD_ISSET(_dam_fd1, &readflags) )
+	{
+	  // cout << __LINE__ << "  " << __FILE__ << " data on dam1 "  << endl;
+	  l+= add_packet (_dam_fd1, adr, length -l, _subeventid1);
+	}
     }
-  return overall_length;
+  return l;
+  
+}
+ 
+ int daq_device_dam::add_packet(int fd, int * adr, const int length, const int ipacket )
+ {
+  subevtdata_ptr sevt =  (subevtdata_ptr) adr;
+  // set the initial subevent length
+  sevt->sub_length =  SEVTHEADERLENGTH;
+
+  // update id's etc
+  sevt->sub_id = ipacket;
+  sevt->sub_type=2;
+  sevt->sub_decoding = 120; // IDTPCFEEV3 
+  sevt->reserved[0] = 0;
+  sevt->reserved[1] = 0;
+  
+  uint16_t *dest = (uint16_t *) &sevt->data;
+  
+  int ret;
+  
+  ret = read(fd, dest, _desired_data_length);
+  
+  //cout << __LINE__ << "  " << __FILE__ << " wanted " << _desired_data_length << " and read  "  << ret << " words " << endl;
+  
+  //      sevt->sub_padding = ret%2 ;
+  sevt->sub_padding = 0;  // we can never have an odd number of uint16s
+  
+  sevt->sub_length += (ret + sevt->sub_padding);
+  // cout << __LINE__ << "  " << __FILE__ << " returning "  << sevt->sub_length << endl;
+  return sevt->sub_length;
+
 }
 
   
@@ -200,17 +211,15 @@ void daq_device_dam::identify(std::ostream& os) const
   if ( _broken) 
     {
       os << "FELIX DAM Card  Event Type: " << m_eventType 
-	 << " Subevent id: " << m_subeventid 
-	 << " payload units " << _nunits 
-	 << " packets " << _npackets 
+	 << " Subevent ids: " << _subeventid0 << " " << _subeventid1 
+	 << " units " << _nunits 
 	 << " ** not functional ** " << _broken << endl;
     }
   else
     {
       os << "FELIX DAM Card  Event Type: " << m_eventType 
-	 << " Subevent id: " << m_subeventid 
-	 << " payload units " << _nunits 
-	 << " packets " << _npackets;
+	 << " Subevent id: " << _subeventid0 << " " << _subeventid1 
+	 << " units " << _nunits ;
       if (_trigger) os << " *Trigger*" ;
       os << endl;
 
@@ -220,7 +229,7 @@ void daq_device_dam::identify(std::ostream& os) const
 int daq_device_dam::max_length(const int etype) const
 {
   if (etype != m_eventType) return 0;
-  return  ( _npackets * _nunits * DATA_LENGTH + _npackets *SEVTHEADERLENGTH);
+  return  ( _npackets*_desired_data_length + _npackets *SEVTHEADERLENGTH) +16; // I think we got the desired length right, +16 is just for safety
 
 }
 
@@ -234,11 +243,11 @@ int  daq_device_dam::rearm(const int etype)
 int daq_device_dam::endrun() 
 {
   
-  // unsigned int trig = pl_register_read(_dam_fd, FEE_SAMPA_CTRL);
-  // trig &= 0xf;
-  // pl_register_write(_dam_fd, FEE_SAMPA_CTRL, trig);
-  
-  close (_dam_fd);
+  if (_dam_fd0 > 0)  close (_dam_fd0);
+  if (_dam_fd1 > 0)  close (_dam_fd1);
+
+  _dam_fd0 = -1;
+  _dam_fd1 = -1;
   
   return 0;
 }

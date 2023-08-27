@@ -7,6 +7,20 @@
 
 #include <strings.h>
 
+using namespace std;
+
+//parameters -
+// evt type
+// packetid 0
+// packetid 1
+// nunits  - control the size of the packet
+// trigger
+
+// eg 1 4001 4002 64 1  == read out 2 endpoints
+// eg 1 4001    0 64 1  == read out 1 endpoint
+
+
+
 int dam_plugin::create_device(deviceblock *db)
 {
 
@@ -17,6 +31,7 @@ int dam_plugin::create_device(deviceblock *db)
 
   if ( strcasecmp(db->argv0,"device_dam") == 0 ) 
     {
+      //std::cout << __LINE__ << "  " << __FILE__ << "  " << db->argv0 << "  " << db->npar << std::endl;
       // we need at least 2 params
       if ( db->npar <3 ) return 1; // indicate wrong params
       
@@ -32,37 +47,38 @@ int dam_plugin::create_device(deviceblock *db)
 
       else if ( db->npar == 4)
 	{
-	  int trigger = get_value ( db->argv3);
 
+	  int subid1 = get_value ( db->argv3);
+	  cout << " subids " << subid << " " << subid1 << endl;
 	  add_readoutdevice ( new daq_device_dam( eventtype,
 						  subid,
-						  trigger ));
+						  subid1) );
 	  return 0;  // say "we handled this request" 
 	}
 
       else if ( db->npar == 5)
 	{
-	  int trigger = get_value ( db->argv3);
+	  int subid1 = get_value ( db->argv3);
 	  int nunits = get_value ( db->argv4);
 
 	  add_readoutdevice ( new daq_device_dam( eventtype,
 						  subid,
-						  trigger,
-						  nunits));
+						  subid1,
+						  nunits ));  
 	  return 0;  // say "we handled this request" 
 	}
 
       else if ( db->npar == 6)
 	{
-	  int trigger = get_value ( db->argv3);
+	  int subid1 = get_value ( db->argv3);
 	  int nunits = get_value ( db->argv4);
-	  int npackets = get_value ( db->argv5);
+	  int trigger = get_value ( db->argv5);
 
 	  add_readoutdevice ( new daq_device_dam( eventtype,
 						  subid,
-						  trigger,
+						  subid1,
 						  nunits,
-						  npackets));
+						  trigger ) );
 	  return 0;  // say "we handled this request" 
 	}
 
