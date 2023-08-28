@@ -199,7 +199,7 @@ int daq_device_dam::put_data(const int etype, int * adr, const int length )
   //      sevt->sub_padding = ret%2 ;
   sevt->sub_padding = 0;  // we can never have an odd number of uint16s
   
-  sevt->sub_length += (ret + sevt->sub_padding);
+  sevt->sub_length += (ret/sizeof(int) + sevt->sub_padding);
   // cout << __LINE__ << "  " << __FILE__ << " returning "  << sevt->sub_length << endl;
   return sevt->sub_length;
 
